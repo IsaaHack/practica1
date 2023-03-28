@@ -51,6 +51,23 @@ bool actuacionJugador(unsigned char celda_inicial, unsigned char celda_fin, Acti
         monitor.get_entidad(0)->Cogio_Zapatillas(false);
         // monitor.finalizarJuego();
         // monitor.setMostrarResultados(true);
+        // Si reaparece en casillas especiales aplicamos efecto
+        if (celdaRand == 'X')
+        { // Casilla Rosa (Recarga)
+          monitor.get_entidad(0)->increaseBateria(10);
+        }
+        else if (celdaRand == 'D')
+        { // Casilla Morada (Zapatillas)
+          monitor.get_entidad(0)->Cogio_Zapatillas(true);
+        }
+        else if (celdaRand == 'K')
+        { // Casilla Amarilla (Bikini)
+          monitor.get_entidad(0)->Cogio_Bikini(true);
+        }
+        else if (celdaRand == 'G')
+        { // Casilla celeste claro (GPS)
+          monitor.get_entidad(0)->notify();
+        }
 
         break;
       case 'G': // Casilla celeste claro (GPS)
@@ -205,6 +222,24 @@ bool actuacionNPC(unsigned int entidad, unsigned char celda, Action accion, unsi
         monitor.get_entidad(0)->setHitbox(true);
         monitor.get_entidad(0)->Cogio_Bikini(false);
         monitor.get_entidad(0)->Cogio_Zapatillas(false);
+
+        // Si reaparece en casillas especiales aplicamos efecto
+        if (celdaRand == 'X')
+        { // Casilla Rosa (Recarga)
+          monitor.get_entidad(0)->increaseBateria(10);
+        }
+        else if (celdaRand == 'D')
+        { // Casilla Morada (Zapatillas)
+          monitor.get_entidad(0)->Cogio_Zapatillas(true);
+        }
+        else if (celdaRand == 'K')
+        { // Casilla Amarilla (Bikini)
+          monitor.get_entidad(0)->Cogio_Bikini(true);
+        }
+        else if (celdaRand == 'G')
+        { // Casilla celeste claro (GPS)
+          monitor.get_entidad(0)->notify();
+        }
       }
       break;
 
@@ -284,8 +319,6 @@ bool actuacion(unsigned int entidad, Action accion)
     f = f - 1;
     c = c - 1;
     break;
-
-
   }
 
   celda_fin = monitor.getMapa()->getCelda(f, c);
@@ -321,6 +354,8 @@ void nucleo_motor_juego(MonitorJuego &monitor, int acc)
 
   if (monitor.get_entidad(0)->ready())
   {
+    monitor.init_casillas_especiales(monitor.get_entidad(0)->getFil(), monitor.get_entidad(0)->getCol());
+
     clock_t t0 = clock();
     accion = monitor.get_entidad(0)->think(acc, estado[0], monitor.getLevel());
     clock_t t1 = clock();
@@ -328,7 +363,6 @@ void nucleo_motor_juego(MonitorJuego &monitor, int acc)
     monitor.get_entidad(0)->addTiempo(t1 - t0);
     monitor.get_entidad(0)->getLastAction(accion);
     actuacion(0, accion);
-    monitor.get_entidad(0)->setVision(monitor.getMapa()->vision(0));
   }
   else
   {
@@ -343,6 +377,10 @@ void nucleo_motor_juego(MonitorJuego &monitor, int acc)
 
     monitor.get_entidad(i)->addTiempo(t1 - t0);
     actuacion(i, accion);
+  }
+
+  for (unsigned int i = 0; i < monitor.numero_entidades(); i++)
+  {
     monitor.get_entidad(i)->setVision(monitor.getMapa()->vision(i));
   }
 

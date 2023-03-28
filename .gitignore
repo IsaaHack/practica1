@@ -6,3 +6,5 @@ CMakeCache.txt
 cmake_install.cmake
 .DS_Store
 build/
+Makefile
+.vscode
