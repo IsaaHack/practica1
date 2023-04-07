@@ -2,38 +2,12 @@
 #include <iostream>
 using namespace std;
 
-
+void ponerTerrenoEnMatriz(const vector<unsigned char> &terreno, const state &st, 
+							vector<vector<unsigned char>> &matriz);
 
 Action ComportamientoJugador::think(Sensores sensores){
-
 	Action accion = actIDLE;
 	int a;
-
-	cout << "Posicion: fila " << sensores.posF << " columna " << sensores.posC << " ";
-	switch(sensores.sentido){
-		case 0: cout << "Norte" << endl; break;
-		case 1: cout << "Noreste" << endl; break;
-		case 2: cout << "Este" << endl; break;
-		case 3: cout << "Sureste" << endl; break;
-		case 4: cout << "Sur " << endl; break;
-		case 5: cout << "Suroeste" << endl; break;
-		case 6: cout << "Oeste" << endl; break;
-		case 7: cout << "Noroeste" << endl; break;
-	}
-	cout << "Terreno: ";
-	for (int i=0; i<sensores.terreno.size(); i++)
-		cout << sensores.terreno[i];
-	cout << endl;
-
-	cout << "Superficie: ";
-	for (int i=0; i<sensores.superficie.size(); i++)
-		cout << sensores.superficie[i];
-	cout << endl;
-
-	cout << "Colisión: " << sensores.colision << endl;
-	cout << "Reset: " << sensores.reset << endl;
-	cout << "Vida: " << sensores.vida << endl;
-	cout << endl;
 
 	switch (last_action){
 		case actFORWARD:
@@ -75,16 +49,26 @@ Action ComportamientoJugador::think(Sensores sensores){
 			break;
 	}
 
+	if(sensores.reset){
+		bikini = zapatillas = bien_situado = false;
+		current_state.fil = current_state.col = 99;
+    	current_state.brujula = norte;
+		reiniciarMapaTerreno();
+	}
+
+	if(!bien_situado)
+		ponerTerrenoEnMatriz(sensores.terreno, current_state, map_aux.terreno);
+
 	if (sensores.posF != -1 and !bien_situado){
+		state last_state = current_state;
 		current_state.fil = sensores.posF;
 		current_state.col= sensores.posC;
 		current_state.brujula = sensores.sentido;
+		transladarMatriz(map_aux.terreno, mapaResultado, last_state, current_state);
 		bien_situado = true;
-	}
-
-	if (bien_situado){
-		
-		//mapaResultado[current_state.fil][current_state.col] = sensores.terreno[0];
+	}else{
+		ponerTerrenoEnMatriz(sensores.terreno, current_state, mapaResultado);
+		map_aux.frecuencias[current_state.fil][current_state.col]++;
 	}
 
 	//Decidir la nueva acción
@@ -134,8 +118,25 @@ void ponerTerrenoEnMatriz(const vector<unsigned char> &terreno, const state &st,
 		horizontal = -1;
 		vertical = 0;
 		break;
-	
-	default:
+
+	case noreste:
+		horizontal = 1;
+		vertical = -1;
+		break;
+
+	case sureste:
+		horizontal = 1;
+		vertical = 1;
+		break;
+
+	case suroeste:
+		horizontal = -1;
+		vertical = 1;
+		break;
+
+	case noroeste:
+		horizontal = -1;
+		vertical = -1;
 		break;
 	}
 
@@ -143,22 +144,113 @@ void ponerTerrenoEnMatriz(const vector<unsigned char> &terreno, const state &st,
 
 
 	for (int i = 1; i < 4; ++i){
-		fil += vertical - horizontal;
-		col += vertical + horizontal;
+		if(horizontal == 0 || vertical == 0){
+			fil += vertical - horizontal;
+			col += vertical + horizontal;
+		}else{
+			switch (st.brujula)
+			{
+			case noreste:
+				fil = st.fil + vertical*i;
+				col = st.col;
+				break;
 
-		for(int j = 0; j < 1+2*i; ++j){
-			if(horizontal == 0) col -= vertical;
-			else if(vertical == 0) fil += horizontal;
+			case sureste:
+				fil = st.fil;
+				col = st.col + horizontal*i;
+				break;
 
-			matriz[fil][col] = terreno[i*i + j];
+			case suroeste:
+				fil = st.fil + vertical*i;
+				col = st.col;
+				break;
+
+			case noroeste:
+				fil = st.fil;
+				col = st.col + horizontal*i;
+				break;
+			}
 		}
 
-		col = col + vertical*(2*i);
-		fil = fil - horizontal*(2*i);
-	}
+		for(int j = 0; j < 1+2*i; ++j){
+			matriz[fil][col] = terreno[i*i + j];
 
-	matriz [st.fil-1][st.col-1] = terreno[1];
-	matriz [st.fil-1][st.col-1] = terreno[2];
+			if(horizontal != 0 && vertical != 0){
+				if(i*i + j < i*(i + 1)){
+					switch (st.brujula)
+					{
+					case noreste:
+						col++;
+						break;
+
+					case sureste:
+						fil++;
+						break;
+
+					case suroeste:
+						col--;
+						break;
+
+					case noroeste:
+						fil--;
+						break;
+					}
+				}else{
+					switch (st.brujula)
+					{
+					case noreste:
+						fil++;
+						break;
+
+					case sureste:
+						col--;
+						break;
+
+					case suroeste:
+						fil--;
+						break;
+
+					case noroeste:
+						col++;
+						break;
+					}
+				}
+
+				
+			}else if(horizontal == 0) col -= vertical;
+			else if(vertical == 0) fil += horizontal;
+			
+		}
+
+		if(horizontal == 0 || vertical == 0){
+			col = col + vertical*(2*i + 1);
+			fil = fil - horizontal*(2*i + 1);
+		}
+	}
+}
+
+void ComportamientoJugador::inicializarMapaAux(){
+	for(int i = 0; i < 200; ++i)
+        for(int j = 0; j < 200; ++j){
+			map_aux.frecuencias[i][j] = 0;
+			map_aux.terreno[i][j] = '?';
+		}
+}
+
+void ComportamientoJugador::reiniciarMapaTerreno(){
+	for(int i = 0; i < 200; ++i)
+        for(int j = 0; j < 200; ++j){
+			map_aux.terreno[i][j] = '?';
+		}
+}
+
+void transladarMatriz(vector<vector <unsigned char>> fuente , vector<vector <unsigned char>> destino, state estado_anterior, state estado){
+	int dif_filas = estado_anterior.fil - estado.fil;
+	int dif_columnas = estado_anterior.col - estado.col;
+
+	for(int i = 0; i < destino.size(); ++i)
+		for(int j = 0; j < destino[i].size(); ++j)
+			if(destino[i][j] == '?') destino[i][j] = fuente[dif_filas + i][dif_columnas + j];
 }
 
 int ComportamientoJugador::interact(Action accion, int valor){
