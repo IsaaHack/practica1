@@ -64,10 +64,15 @@ Action ComportamientoJugador::think(Sensores sensores){
 		current_state.fil = current_state.col = 99;
     	current_state.brujula = norte;
 		frecuencia_analizada = en_camino = false;
+		veces_forward = girar_derecha = 0;
+		cargando = false;
 		reiniciarMapaTerreno();
 	}
 
 	gestionarCasillasEspeciales();
+
+	if(last_action == actFORWARD) veces_forward++;
+	else veces_forward = 0;
 
 	if(!bien_situado)
 		ponerTerrenoEnMatriz(sensores.terreno, current_state, map_aux.terreno);
@@ -81,7 +86,7 @@ Action ComportamientoJugador::think(Sensores sensores){
 		bien_situado = true;
 	}else if (bien_situado){
 		ponerTerrenoEnMatriz(sensores.terreno, current_state, mapaResultado);
-		if(!esBateria(0) || !esBikini(0) || !esZapatillas(0) || !esPosicion(0))
+		if(!esBateria(0) || !esBikini(0) || !esZapatillas(0) || !esPosicion(0) || last_action == actFORWARD)
 			map_aux.frecuencias[current_state.fil][current_state.col]++;
 
 		//if(rodeando_muro) map_aux.frecuencias[current_state.fil][current_state.col]--;
@@ -94,19 +99,19 @@ Action ComportamientoJugador::think(Sensores sensores){
 		accion = actTURN_BL;
 		girar_derecha++;
 		if(girar_derecha > 2) girar_derecha = 0;
-	}else if (esViablePasar(2) and sensores.superficie[2]!='a'){
+	}else if (esViablePasar(2) && sensores.superficie[2]!='a' && (veces_forward < 6 || en_camino)){
+		cargando = false;
 		if (rodeando_muro && !esMuro(rodeando_muro)){
 			accion = actFORWARD;
 			if(rodeando_muro == 1 && esMuro(5)) accion = actTURN_SL;
 			else if(rodeando_muro == 3 && esMuro(7)) accion = actTURN_SR;
 			rodeando_muro = 0;
 		}else accion = analizarVision();
-		cargando = false;
-		if(accion == actFORWARD && bien_situado && !frecuencia_analizada && !en_camino){
-			accion = analizarFrecuencias();
-		}else if(frecuencia_analizada){
-			frecuencia_analizada = false;
-		}
+			if(accion == actFORWARD && bien_situado && !frecuencia_analizada && !en_camino){
+				accion = analizarFrecuencias();
+			}else if(frecuencia_analizada){
+				frecuencia_analizada = false;
+			}
 		
 	} else if (cargando){
 		accion = actIDLE;
@@ -139,6 +144,10 @@ Action ComportamientoJugador::think(Sensores sensores){
 					break;
 				}
 			}
+			if(esPrecipicio(1) && veces_forward > 6) accion = actTURN_SR;
+			else if(esPrecipicio(3) && veces_forward > 6) accion = actTURN_SL;
+			//if(last_action == actTURN_SL) accion = actTURN_BR;
+			//else if(last_action == actTURN_SR) accion = actTURN_BL;
 		
 	}
 	
@@ -369,12 +378,13 @@ bool ComportamientoJugador::esViablePasar(int n){
 	if(esBateria(0) && esViableSeguirCargando()) return false;
 	if(esAgua(0) && !bikini) return true;
 	if(esBosque(0) && !zapatillas) return true;
+	if((esBateria(0) || esPosicion(0) || esZapatillas(0)) && esAgua(1) && esAgua(2) && esAgua(3)) return true;
+	if((esBateria(0) || esPosicion(0) || esBikini(0)) && esBosque(1) && esBosque(2) && esBosque(3)) return true;
 	if(esAgua(n) && !bikini) return false;
 	if(esBosque(n) && !zapatillas) return false;
-	if((esAgua(n) && !bikini) && enModoAhorroEnergia()) return false;
-	if((esBosque(n) && !zapatillas) && enModoAhorroEnergia()) return false;
+	//if((esAgua(n) && !bikini) && enModoAhorroEnergia()) return false;
+	//if((esBosque(n) && !zapatillas) && enModoAhorroEnergia()) return false;
 	
-	//continuar
 	return true;
 	
 
@@ -413,12 +423,12 @@ void ComportamientoJugador::gestionarCasillasEspeciales(){
 }
 
 bool ComportamientoJugador::esViableSeguirCargando(){
-	if(sensor.vida < ((5000 - sensor.bateria)/10) || sensor.bateria >= 5000) return false;
+	if(sensor.vida < ((5000 - sensor.bateria)/10) || sensor.bateria >= 4700) return false;
 	return true;
 }
 
 bool ComportamientoJugador::enModoAhorroEnergia(){
-	if(sensor.bateria < 2750) return true;
+	if(sensor.bateria < 3000) return true;
 	return false;
 }
 

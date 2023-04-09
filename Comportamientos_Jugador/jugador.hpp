@@ -25,7 +25,7 @@ class ComportamientoJugador : public Comportamiento{
       current_state.brujula = norte;
       last_action = actIDLE;
       bikini = zapatillas = cargando = bien_situado = frecuencia_analizada = en_camino = false;
-      girar_derecha = rodeando_muro = 0;
+      girar_derecha = rodeando_muro = veces_forward = 0;
       inicializarMapaAux();
     }
 
@@ -58,7 +58,7 @@ class ComportamientoJugador : public Comportamiento{
   // Declarar aquí las variables de estado
   state current_state;
   Action last_action;
-  int girar_derecha, rodeando_muro;
+  int girar_derecha, rodeando_muro, veces_forward;
   mapas_auxiliares map_aux;
   bool bikini, zapatillas, cargando, bien_situado, frecuencia_analizada, en_camino;
   Sensores sensor;
