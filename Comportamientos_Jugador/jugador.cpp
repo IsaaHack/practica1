@@ -131,7 +131,8 @@ Action ComportamientoJugador::think(Sensores sensores){
 		}else if(frecuencia_analizada){
 			frecuencia_analizada = false;
 		}
-		if(accion == actFORWARD){
+
+		if((accion == actFORWARD)){
 			int random = (rand()%2);
 			switch (random)
 				{
@@ -143,9 +144,8 @@ Action ComportamientoJugador::think(Sensores sensores){
 					accion = actTURN_SR;
 					break;
 				}
-			}
-			if(esPrecipicio(1) && veces_forward > 6) accion = actTURN_SR;
-			else if(esPrecipicio(3) && veces_forward > 6) accion = actTURN_SL;
+		}
+			
 			//if(last_action == actTURN_SL) accion = actTURN_BR;
 			//else if(last_action == actTURN_SR) accion = actTURN_BL;
 		
@@ -329,8 +329,10 @@ void transladarMatriz(vector<vector <unsigned char>> &fuente , vector<vector <un
 	int dif_columnas = estado_anterior.col - estado.col;
 
 	for(int i = 0; i < destino.size(); ++i)
-		for(int j = 0; j < destino[i].size(); ++j)
+		for(int j = 0; j < destino[i].size(); ++j){
 			if(destino[i][j] == '?') destino[i][j] = fuente[dif_filas + i][dif_columnas + j];
+		}
+			
 }
 
 bool ComportamientoJugador::esAgua(int n){
@@ -423,7 +425,7 @@ void ComportamientoJugador::gestionarCasillasEspeciales(){
 }
 
 bool ComportamientoJugador::esViableSeguirCargando(){
-	if(sensor.vida < ((5000 - sensor.bateria)/10) || sensor.bateria >= 4700) return false;
+	if(sensor.vida < ((5000 - sensor.bateria)/10) || sensor.bateria >= 4800) return false;
 	return true;
 }
 
@@ -438,43 +440,57 @@ bool ComportamientoJugador::esTransitable(int n){
 }
 
 Action ComportamientoJugador::analizarVision(){
-	bool esViable1 = esViablePasar(1), esViable4 = esViablePasar(4), esViable3 = esViablePasar(3), esViable8 = esViablePasar(8);
+	bool esViable1 = esViablePasar(1), esViable4 = esViablePasar(4),
+	 	 esViable3 = esViablePasar(3), esViable8 = esViablePasar(8);
 	en_camino = true;
 	if(!bien_situado){
 		if(esPosicion(2) || esPosicion(6) || esPosicion(12)) return actFORWARD;
 		if(esPosicion(1)) return actTURN_SL;
-		if(esPosicion(4) && esViable1) return actTURN_SL;
-		if(esPosicion(9) && esViable1 && esViable4) return actTURN_SL;
 		if(esPosicion(3)) return actTURN_SR;
+		if(esPosicion(4) && esViable1) return actTURN_SL;
 		if(esPosicion(8) && esViable3) return actTURN_SR;
+		if(esPosicion(9) && esViable1 && esViable4) return actTURN_SL;
 		if(esPosicion(15) && esViable3 && esViable8) return actTURN_SR;
 	}
 	if(!bikini){
 		if(esBikini(2) || esBikini(6) || esBikini(12)) return actFORWARD;
 		if(esBikini(1)) return actTURN_SL;
-		if(esBikini(4) && esViable1) return actTURN_SL;
-		if(esBikini(9) && esViable1 && esViable4) return actTURN_SL;
 		if(esBikini(3)) return actTURN_SR;
+		if(esBikini(4) && esViable1) return actTURN_SL;
 		if(esBikini(8) && esViable3) return actTURN_SR;
+		if(esBikini(9) && esViable1 && esViable4) return actTURN_SL;
 		if(esBikini(15) && esViable3 && esViable8) return actTURN_SR;
 	}
 	if(!zapatillas){
 		if(esZapatillas(2) || esZapatillas(6) || esZapatillas(12)) return actFORWARD;
 		if(esZapatillas(1)) return actTURN_SL;
-		if(esZapatillas(4) && esViable1) return actTURN_SL;
-		if(esZapatillas(9) && esViable1 && esViable4) return actTURN_SL;
 		if(esZapatillas(3)) return actTURN_SR;
+		if(esZapatillas(4) && esViable1) return actTURN_SL;
 		if(esZapatillas(8) && esViable3) return actTURN_SR;
+		if(esZapatillas(9) && esViable1 && esViable4) return actTURN_SL;
 		if(esZapatillas(15) && esViable3 && esViable8) return actTURN_SR;
 	}
 	if(enModoAhorroEnergia()){
 		if(esBateria(2) || esBateria(6) || esBateria(12)) return actFORWARD;
 		if(esBateria(1)) return actTURN_SL;
-		if(esBateria(4) && esViable1) return actTURN_SL;
-		if(esBateria(9) && esViable1 && esViable4) return actTURN_SL;
 		if(esBateria(3)) return actTURN_SR;
+		if(esBateria(4) && esViable1) return actTURN_SL;
 		if(esBateria(8) && esViable3) return actTURN_SR;
+		if(esBateria(9) && esViable1 && esViable4) return actTURN_SL;
 		if(esBateria(15) && esViable3 && esViable8) return actTURN_SR;
+	}
+	if(esBosque(0) && !zapatillas){
+		Action accion;
+		if(!esBosque(2) || !esBosque(6) || !esBosque(12)) accion = actFORWARD;
+		else if(!esBosque(1)) accion = actTURN_SL;
+		else if(!esBosque(3)) accion = actTURN_SR;
+		else if(!esBosque(4) && esViable1) accion = actTURN_SL;
+		else if(!esBosque(8) && esViable3) accion = actTURN_SR;
+		else if(!esBosque(9) && esViable1 && esViable4) accion = actTURN_SL;
+		else if(!esBosque(15) && esViable3 && esViable8) accion = actTURN_SR;
+
+		en_camino = false;
+		return accion;
 	}
 
 	en_camino = false;

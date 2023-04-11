@@ -27,6 +27,11 @@ class ComportamientoJugador : public Comportamiento{
       bikini = zapatillas = cargando = bien_situado = frecuencia_analizada = en_camino = false;
       girar_derecha = rodeando_muro = veces_forward = 0;
       inicializarMapaAux();
+      for(int i = 0; i < mapaResultado.size(); ++i)
+        for(int j = 0; j < mapaResultado[i].size(); ++j){
+          if(i < 3 || i >= mapaResultado[i].size() - 3) mapaResultado[i][j] = 'P';
+          else if(j < 3 || j >= mapaResultado[i].size() - 3) mapaResultado[i][j] = 'P';
+        } 
     }
 
     ComportamientoJugador(const ComportamientoJugador & comport) : Comportamiento(comport){}
